@@ -15,14 +15,11 @@ const commands = [
     new SlashCommandBuilder().setName('custom-spam').setDescription('Spam anything').addStringOption(o=>o.setName('text').setDescription('What to spam').setRequired(true)).setIntegrationTypes([0,1]).setContexts([0,1,2]).toJSON(),
     new SlashCommandBuilder().setName('fast-flood').setDescription('Fast invite flood').setIntegrationTypes([0,1]).setContexts([0,1,2]).toJSON(),
     new SlashCommandBuilder().setName('l-spam').setDescription('Lag spam').setIntegrationTypes([0,1]).setContexts([0,1,2]).toJSON(),
-    new SlashCommandBuilder().setName('purge').setDescription('Delete recent messages from bot').addIntegerOption(o=>o.setName('count').setDescription('How many (1-100)').setRequired(true)).setIntegrationTypes([0,1]).setContexts([0,1,2]).toJSON(),
-    new SlashCommandBuilder().setName('stop').setDescription('Stop active spam').setIntegrationTypes([0,1]).setContexts([0,1,2]).toJSON()
+    new SlashCommandBuilder().setName('purge').setDescription('Delete recent bot messages').addIntegerOption(o=>o.setName('count').setDescription('How many (1-100)').setRequired(true)).setIntegrationTypes([0,1]).setContexts([0,1,2]).toJSON()
 ];
 
 const MEOW_SPAM = 'meow hub owns u '.repeat(Math.floor(1950 / 18));
 const SPAM_MSG = `${MEOW_SPAM}\n${INVITE}\n@everyone @here`;
-
-let activeSpam = false;
 
 http.createServer((req, res) => { res.writeHead(200); res.end('Alive'); }).listen(process.env.PORT || 3000);
 
@@ -38,20 +35,19 @@ client.once('ready', async () => {
 client.on('interactionCreate', async (interaction) => {
     if (!interaction.isChatInputCommand()) return;
     const cmd = interaction.commandName;
+    const channel = interaction.channel;
 
-    // /stop - emergency kill switch
-    if (cmd === 'stop') {
-        activeSpam = false;
-        await interaction.reply({content:'Stopped all active spam', ephemeral:true});
-        return;
+    if (!channel) {
+        return interaction.reply({content:'No channel access. Bot needs to be in the server.', ephemeral:true});
     }
 
-    // /say - anonymous, uses channel.send() not followUp
+    // /say - anonymous
     if (cmd === 'say') {
         const msg = interaction.options.getString('message');
-        await interaction.reply({content:'Sent!', ephemeral:true});
-        // Regular message, no link to interaction
-        await interaction.channel.send(msg).catch(()=>{});
+        // Defer ephemeral, delete it, then send normally
+        await interaction.deferReply({ephemeral:true});
+        await interaction.deleteReply();
+        await channel.send(msg).catch(()=>{});
         return;
     }
 
@@ -64,51 +60,39 @@ client.on('interactionCreate', async (interaction) => {
             .setColor(0xff0000)
             .setThumbnail(user.displayAvatarURL())
             .setFooter({text:'meow hub on top'});
-        await interaction.reply({content:'Sent!', ephemeral:true});
-        await interaction.channel.send({content:`${user}`, embeds:[embed]}).catch(()=>{});
-        return;
-    }
-
-    // /purge - clean up bot messages
-    if (cmd === 'purge') {
-        const count = Math.min(interaction.options.getInteger('count'), 100);
-        await interaction.reply({content:`Purging ${count} messages...`, ephemeral:true});
-        try {
-            const msgs = await interaction.channel.messages.fetch({limit:100});
-            const botMsgs = msgs.filter(m => m.author.id === client.user.id).first(count);
-            for (const [id, msg] of botMsgs) {
-                await msg.delete().catch(()=>{});
-            }
-        } catch(e) {}
+        await interaction.deferReply({ephemeral:true});
+        await interaction.deleteReply();
+        await channel.send({content:`${user}`, embeds:[embed]}).catch(()=>{});
         return;
     }
 
     // /spam
     if (cmd === 'spam') {
-        await interaction.reply({content:'Spamming...', ephemeral:true});
-        activeSpam = true;
-        for (let i=0;i<100 && activeSpam;i++) {
-            await interaction.channel.send(SPAM_MSG).catch(()=>{});
+        await interaction.deferReply({ephemeral:true});
+        await interaction.deleteReply();
+        for (let i=0;i<100;i++) {
+            await channel.send(SPAM_MSG).catch(()=>{});
         }
-        activeSpam = false;
         return;
     }
 
     // /flood
     if (cmd === 'flood') {
-        await interaction.reply({content:'Flooding...', ephemeral:true});
+        await interaction.deferReply({ephemeral:true});
+        await interaction.deleteReply();
         for (let i=0;i<100;i++) {
-            await interaction.channel.send(INVITE).catch(()=>{});
+            await channel.send(INVITE).catch(()=>{});
         }
         return;
     }
 
     // /fast-flood
     if (cmd === 'fast-flood') {
-        await interaction.reply({content:'Fast flooding...', ephemeral:true});
+        await interaction.deferReply({ephemeral:true});
+        await interaction.deleteReply();
         const p = [];
         for (let i=0;i<100;i++) {
-            p.push(interaction.channel.send(INVITE).catch(()=>{}));
+            p.push(channel.send(INVITE).catch(()=>{}));
         }
         await Promise.all(p);
         return;
@@ -117,24 +101,39 @@ client.on('interactionCreate', async (interaction) => {
     // /custom-spam
     if (cmd === 'custom-spam') {
         const text = interaction.options.getString('text');
-        await interaction.reply({content:'Spamming...', ephemeral:true});
+        await interaction.deferReply({ephemeral:true});
+        await interaction.deleteReply();
         for (let i=0;i<100;i++) {
-            await interaction.channel.send(text).catch(()=>{});
+            await channel.send(text).catch(()=>{});
         }
         return;
     }
 
     // /l-spam
     if (cmd === 'l-spam') {
-        await interaction.reply({content:'Lag spam...', ephemeral:true});
+        await interaction.deferReply({ephemeral:true});
+        await interaction.deleteReply();
         const LINE_SEP = '\u2028';
         const header = `${INVITE} `;
         const footer = ' @everyone @here';
         const pad = LINE_SEP.repeat(1990 - header.length - footer.length);
         const msg = header + pad + footer;
         for (let i=0;i<100;i++) {
-            await interaction.channel.send(msg).catch(()=>{});
+            await channel.send(msg).catch(()=>{});
         }
+        return;
+    }
+
+    // /purge
+    if (cmd === 'purge') {
+        const count = Math.min(interaction.options.getInteger('count'), 100);
+        await interaction.deferReply({ephemeral:true});
+        const msgs = await channel.messages.fetch({limit:100});
+        const botMsgs = msgs.filter(m => m.author.id === client.user.id).first(count);
+        for (const [id, msg] of botMsgs) {
+            await msg.delete().catch(()=>{});
+        }
+        await interaction.deleteReply();
         return;
     }
 });
