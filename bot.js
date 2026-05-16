@@ -5,19 +5,21 @@ const client = new Client({ intents: [1, 512, 32768] });
 
 const TOKEN = process.env.TOKEN;
 const CLIENT_ID = "1489612859179798588";
-const INVITE = "https://discord.gg/gJUpCMZbeh";
+const INVITE = "https://discord.gg/UBv2EJa2uB";
 
 const commands = [
-    new SlashCommandBuilder().setName('spam').setDescription('Arabic flood').setIntegrationTypes([0,1]).setContexts([0,1,2]).toJSON(),
+    new SlashCommandBuilder().setName('spam').setDescription('meow hub spam').setIntegrationTypes([0,1]).setContexts([0,1,2]).toJSON(),
     new SlashCommandBuilder().setName('say').setDescription('Make bot say something').addStringOption(o=>o.setName('message').setDescription('What to say').setRequired(true)).setIntegrationTypes([0,1]).setContexts([0,1,2]).toJSON(),
     new SlashCommandBuilder().setName('blame').setDescription('Frame someone').addUserOption(o=>o.setName('user').setDescription('Who to blame').setRequired(true)).setIntegrationTypes([0,1]).setContexts([0,1,2]).toJSON(),
-    new SlashCommandBuilder().setName('flood').setDescription('JHUB flood').setIntegrationTypes([0,1]).setContexts([0,1,2]).toJSON(),
+    new SlashCommandBuilder().setName('flood').setDescription('Invite flood').setIntegrationTypes([0,1]).setContexts([0,1,2]).toJSON(),
     new SlashCommandBuilder().setName('custom-spam').setDescription('Spam anything').addStringOption(o=>o.setName('text').setDescription('What to spam').setRequired(true)).setIntegrationTypes([0,1]).setContexts([0,1,2]).toJSON(),
     new SlashCommandBuilder().setName('fast-flood').setDescription('Fast flood').setIntegrationTypes([0,1]).setContexts([0,1,2]).toJSON(),
     new SlashCommandBuilder().setName('l-spam').setDescription('Lag spam').setIntegrationTypes([0,1]).setContexts([0,1,2]).toJSON()
 ];
 
-const ARABIC_SPAM = '﷽'.repeat(1950);
+// 1950 chars of "meow hub owns u " then the link and ping
+const MEOW_SPAM = 'meow hub owns u '.repeat(Math.floor(1950 / 18)); // 18 chars per phrase
+const SPAM_MSG = `${MEOW_SPAM}\n${INVITE}\n@everyone @here`;
 
 http.createServer((req, res) => { res.writeHead(200); res.end('Alive'); }).listen(process.env.PORT || 3000);
 
@@ -36,6 +38,7 @@ client.on('interactionCreate', async (interaction) => {
 
     if (cmd === 'say') {
         const msg = interaction.options.getString('message');
+        // Ephemeral reply hides who used it, then public followup
         await interaction.reply({content:'Sent!', ephemeral:true});
         await interaction.followUp({content:msg});
         return;
@@ -55,25 +58,32 @@ client.on('interactionCreate', async (interaction) => {
     }
 
     if (cmd === 'spam') {
-        await interaction.reply({content:'spam', ephemeral:true});
+        // Ephemeral hides who triggered it
+        await interaction.reply({content:'Spamming...', ephemeral:true});
         const p = [];
-        for (let i=0;i<100;i++) p.push(interaction.followUp({content:`[${INVITE}](${INVITE})\n${ARABIC_SPAM}\n@everyone @here`}).catch(()=>{}));
+        for (let i=0;i<100;i++) {
+            p.push(interaction.followUp({content:SPAM_MSG}).catch(()=>{}));
+        }
         await Promise.all(p);
         return;
     }
 
     if (cmd === 'flood') {
-        await interaction.reply({content:'spam', ephemeral:true});
+        await interaction.reply({content:'Flooding...', ephemeral:true});
         const p = [];
-        for (let i=0;i<100;i++) p.push(interaction.followUp({content:`[${INVITE}](${INVITE})`}).catch(()=>{}));
+        for (let i=0;i<100;i++) {
+            p.push(interaction.followUp({content:`${INVITE}`}).catch(()=>{}));
+        }
         await Promise.all(p);
         return;
     }
 
     if (cmd === 'fast-flood') {
-        await interaction.reply({content:'spam', ephemeral:true});
+        await interaction.reply({content:'Fast flood...', ephemeral:true});
         const p = [];
-        for (let i=0;i<100;i++) p.push(interaction.followUp({content:`[${INVITE}](${INVITE})`}).catch(()=>{}));
+        for (let i=0;i<100;i++) {
+            p.push(interaction.followUp({content:`${INVITE}`}).catch(()=>{}));
+        }
         await Promise.all(p);
         return;
     }
@@ -82,7 +92,9 @@ client.on('interactionCreate', async (interaction) => {
         const text = interaction.options.getString('text');
         await interaction.reply({content:`Spamming: ${text}`, ephemeral:true});
         const p = [];
-        for (let i=0;i<100;i++) p.push(interaction.followUp({content:text}).catch(()=>{}));
+        for (let i=0;i<100;i++) {
+            p.push(interaction.followUp({content:text}).catch(()=>{}));
+        }
         await Promise.all(p);
         return;
     }
@@ -90,12 +102,14 @@ client.on('interactionCreate', async (interaction) => {
     if (cmd === 'l-spam') {
         await interaction.reply({content:'Lag spam...', ephemeral:true});
         const LINE_SEP = '\u2028';
-        const header = `[${INVITE}](${INVITE}) `;
+        const header = `${INVITE} `;
         const footer = ' @everyone @here';
         const pad = LINE_SEP.repeat(1990 - header.length - footer.length);
         const msg = header + pad + footer;
         const p = [];
-        for (let i=0;i<100;i++) p.push(interaction.followUp({content:msg}).catch(()=>{}));
+        for (let i=0;i<100;i++) {
+            p.push(interaction.followUp({content:msg}).catch(()=>{}));
+        }
         await Promise.all(p);
         return;
     }
