@@ -7,7 +7,8 @@ import asyncio
 import io
 
 # -- SETTINGS --
-DISCORD_TOKEN = "YOUR_BOT_TOKEN_HERE"
+import os
+DISCORD_TOKEN = os.environ.get("DISCORD_TOKEN")
 PREFIX = "!"
 DEFAULT_LENGTH = 5
 MIN_LENGTH = 5
