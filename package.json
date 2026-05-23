@@ -1,0 +1,18 @@
+{
+  "name": "discord-spam-bot",
+  "version": "1.0.0",
+  "description": "Discord.js v14 user-installable slash command bot",
+  "main": "bot.js",
+  "scripts": {
+    "start": "node bot.js",
+    "install": "npm install"
+  },
+  "dependencies": {
+    "discord.js": "^14.18.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "author": "",
+  "license": "MIT"
+}
