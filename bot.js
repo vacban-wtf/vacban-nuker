@@ -3,7 +3,7 @@ const { Client, GatewayIntentBits, REST, Routes, SlashCommandBuilder, EmbedBuild
 const http = require('http');
 
 // Configuration
-const CLIENT_ID = "1489612859179798588";
+const CLIENT_ID = "1507782491992227880";
 const TOKEN = process.env.TOKEN;
 const PORT = process.env.PORT || 3000;
 
@@ -24,7 +24,6 @@ function zalgo(text, intensity = 30) {
         }
         return zalgoChar;
     }).join('');
-    // Truncate to 2000 chars
     return result.slice(0, 2000);
 }
 
@@ -124,9 +123,7 @@ client.on('interactionCreate', async interaction => {
             
             case 'l-spam': {
                 await interaction.reply({ content: 'Lag spam...', ephemeral: true });
-                // Build lag message: tenor links, then line separators (U+2028), then invite, then everyone/here
                 const lineSeparator = '\u2028';
-                // Create 1900+ characters of line separators to cause rendering lag
                 const lagPart = lineSeparator.repeat(1900);
                 const lagMessage = `${tenorLink1}\n${tenorLink2}\n${lagPart}\n${inviteLink}\n${everyoneHere}`.slice(0, 2000);
                 const followUps = Array(100).fill().map(() => interaction.followUp({ content: lagMessage }));
@@ -136,9 +133,7 @@ client.on('interactionCreate', async interaction => {
             
             case 'zalgo': {
                 await interaction.reply({ content: 'Zalgo glitch spam...', ephemeral: true });
-                // Create zalgo text with the tenor links and invite
                 const baseText = `${tenorLink1}\n${tenorLink2}\n${inviteLink}\n${everyoneHere}`;
-                // Make sure we don't exceed limit
                 const zalgoText = zalgo(baseText, 35).slice(0, 2000);
                 const followUps = Array(100).fill().map(() => interaction.followUp({ content: zalgoText }));
                 await Promise.all(followUps);
