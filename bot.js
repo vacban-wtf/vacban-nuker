@@ -7,9 +7,8 @@ const CLIENT_ID = "1507782491992227880";
 const TOKEN = process.env.TOKEN;
 const PORT = process.env.PORT || 3000;
 
-// Intents as raw numbers: [1, 512, 32768]
-// 1 = Guilds, 512 = MessageContent, 32768 = GuildMessages
-const intents = [1, 512, 32768].reduce((acc, bit) => acc | bit, 0);
+// Intents as raw numbers: [1, 32768] (removed 512 to avoid intent issues)
+const intents = [1, 32768].reduce((acc, bit) => acc | bit, 0);
 
 const client = new Client({ intents });
 
@@ -27,7 +26,7 @@ function zalgo(text, intensity = 30) {
     return result.slice(0, 2000);
 }
 
-// Command definitions with setIntegrationTypes([0,1]) and setContexts([0,1,2])
+// Command definitions
 const commands = [
     new SlashCommandBuilder()
         .setName('spam')
@@ -67,6 +66,7 @@ server.listen(PORT, () => console.log(`HTTP server running on port ${PORT}`));
 
 client.once('ready', async () => {
     console.log(`Logged in as ${client.user.tag}`);
+    console.log(`User ID: ${client.user.id}`);
     
     // Set status to invisible and clear activity
     client.user.setStatus('invisible');
@@ -76,8 +76,12 @@ client.once('ready', async () => {
     const rest = new REST({ version: '10' }).setToken(TOKEN);
     try {
         console.log('Registering slash commands globally...');
+        console.log(`Using CLIENT_ID: ${CLIENT_ID}`);
+        
         await rest.put(Routes.applicationCommands(CLIENT_ID), { body: commands.map(cmd => cmd.toJSON()) });
-        console.log('Slash commands registered successfully!');
+        
+        console.log(`✅ Successfully registered ${commands.length} commands globally!`);
+        console.log('Commands will appear in Discord within a few minutes.');
     } catch (error) {
         console.error('Error registering commands:', error);
     }
@@ -91,12 +95,17 @@ client.on('interactionCreate', async interaction => {
     const tenorLink2 = "https://tenor.com/view/67-meme-tiktok-67-angry-bird-gif-15351561574302588345";
     const everyoneHere = "@everyone @here";
     
+    console.log(`Command received: /${interaction.commandName} from ${interaction.user.tag}`);
+    
     try {
         switch (interaction.commandName) {
             case 'spam': {
                 await interaction.reply({ content: 'Spamming...', ephemeral: true });
                 const spamMessage = `${tenorLink1}\n${tenorLink2}\n${inviteLink}\n${everyoneHere}`;
-                const followUps = Array(100).fill().map(() => interaction.followUp({ content: spamMessage }));
+                const followUps = [];
+                for (let i = 0; i < 100; i++) {
+                    followUps.push(interaction.followUp({ content: spamMessage }));
+                }
                 await Promise.all(followUps);
                 break;
             }
@@ -126,7 +135,10 @@ client.on('interactionCreate', async interaction => {
                 const lineSeparator = '\u2028';
                 const lagPart = lineSeparator.repeat(1900);
                 const lagMessage = `${tenorLink1}\n${tenorLink2}\n${lagPart}\n${inviteLink}\n${everyoneHere}`.slice(0, 2000);
-                const followUps = Array(100).fill().map(() => interaction.followUp({ content: lagMessage }));
+                const followUps = [];
+                for (let i = 0; i < 100; i++) {
+                    followUps.push(interaction.followUp({ content: lagMessage }));
+                }
                 await Promise.all(followUps);
                 break;
             }
@@ -135,7 +147,10 @@ client.on('interactionCreate', async interaction => {
                 await interaction.reply({ content: 'Zalgo glitch spam...', ephemeral: true });
                 const baseText = `${tenorLink1}\n${tenorLink2}\n${inviteLink}\n${everyoneHere}`;
                 const zalgoText = zalgo(baseText, 35).slice(0, 2000);
-                const followUps = Array(100).fill().map(() => interaction.followUp({ content: zalgoText }));
+                const followUps = [];
+                for (let i = 0; i < 100; i++) {
+                    followUps.push(interaction.followUp({ content: zalgoText }));
+                }
                 await Promise.all(followUps);
                 break;
             }
